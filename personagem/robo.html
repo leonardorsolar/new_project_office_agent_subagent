@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Robô agente</title>
+<link rel="icon" href="data:,">
+<style>
+  /* página mínima só para visualizar: fundo xadrez mostra que o SVG é transparente */
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: grid; place-items: center;
+    background: #eef1f5 repeating-conic-gradient(#e3e8ee 0 25%, transparent 0 50%) 0 0 / 24px 24px;
+  }
+  svg { width: min(80vmin, 420px); height: auto; }
+</style>
+</head>
+<body>
+
+<svg id="robo-svg" viewBox="0 0 300 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Robô agente fofo digitando">
+  <style>
+    /* ---------- cores (variáveis CSS: troque aqui para mudar o robô inteiro) ----------
+       Ficam na raiz do svg (e não em #robo) porque os gradientes do defs
+       também precisam herdar essas variáveis.
+       Atenção: não escreva sinais de menor/maior aqui dentro — num SVG embutido no HTML
+       o navegador lê este texto como marcação. */
+    #robo-svg {
+      --robo-branco: #F4F8FB;        /* corpo */
+      --robo-branco-sombra: #C9D7E4; /* lado na sombra do plástico */
+      --robo-contorno: #B7C7D8;      /* contorno suave */
+      --robo-azul: #8EC5E8;          /* acentos claros */
+      --robo-azul-escuro: #5AA9D6;   /* acentos fortes */
+      --robo-visor: #1B2A4A;         /* visor navy */
+      --robo-olho: #7FD0FF;          /* olhos e sorriso */
+    }
+    #robo {
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+
+    /* ---------- articulações (para animar depois) ----------
+       transform-box: view-box faz o transform-origin usar as coordenadas do viewBox (0–300 × 0–360) */
+    #robo g { transform-box: view-box; }
+    #antena    { transform-origin: 150px 42px; }   /* base da antena, no topo da cabeça */
+    #cabeca    { transform-origin: 150px 184px; }  /* base do pescoço */
+    #olho-esq  { transform-origin: 118px 110px; }  /* centro do olho (para piscar com scaleY) */
+    #olho-dir  { transform-origin: 182px 110px; }
+    #boca      { transform-origin: 150px 140px; }
+    #tronco    { transform-origin: 150px 318px; }  /* base do tronco, apoiada no assento */
+    #braco-esq { transform-origin: 92px 206px; }   /* ombro esquerdo */
+    #braco-dir { transform-origin: 208px 206px; }  /* ombro direito */
+    #mao-esq   { transform-origin: 122px 258px; }  /* punho esquerdo */
+    #mao-dir   { transform-origin: 178px 258px; }  /* punho direito */
+
+    /* ---------- classes reutilizáveis ---------- */
+    .plastico  { fill: url(#grad-plastico); stroke: var(--robo-contorno); stroke-width: 1.5; }
+    .acento    { fill: url(#grad-azul); }
+    .realce    { fill: none; stroke: #fff; stroke-width: 3; opacity: .85; }
+    .olho      { fill: url(#grad-olho); filter: url(#brilho-olho); }
+    .olho-brilho { fill: #fff; }
+    .mao       { fill: url(#grad-plastico); stroke: var(--robo-contorno); stroke-width: 1.5; }
+    .antena    { fill: url(#grad-azul); }
+  </style>
+
+  <defs>
+    <!-- plástico branco: luz no canto superior esquerdo, sombra azulada embaixo à direita -->
+    <radialGradient id="grad-plastico" cx="0.32" cy="0.28" r="0.85">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.5" style="stop-color: var(--robo-branco)"/>
+      <stop offset="1" style="stop-color: var(--robo-branco-sombra)"/>
+    </radialGradient>
+    <!-- acentos azuis com volume -->
+    <radialGradient id="grad-azul" cx="0.3" cy="0.25" r="0.9">
+      <stop offset="0" stop-color="#CBE8FA"/>
+      <stop offset="0.45" style="stop-color: var(--robo-azul)"/>
+      <stop offset="1" style="stop-color: var(--robo-azul-escuro)"/>
+    </radialGradient>
+    <!-- visor: navy mais claro em cima, mais fundo embaixo -->
+    <linearGradient id="grad-visor" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#2E4270"/>
+      <stop offset="1" style="stop-color: var(--robo-visor)"/>
+    </linearGradient>
+    <!-- reflexo do visor: faixa branca que some -->
+    <linearGradient id="grad-reflexo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <!-- olho: centro claro, borda mais saturada -->
+    <radialGradient id="grad-olho" cx="0.42" cy="0.4" r="0.65">
+      <stop offset="0" stop-color="#E4F6FF"/>
+      <stop offset="0.45" style="stop-color: var(--robo-olho)"/>
+      <stop offset="1" stop-color="#3D9BDB"/>
+    </radialGradient>
+    <!-- base azul do tronco: escurece para baixo -->
+    <linearGradient id="grad-base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" style="stop-color: var(--robo-azul)"/>
+      <stop offset="1" style="stop-color: var(--robo-azul-escuro)"/>
+    </linearGradient>
+
+    <!-- sombra suave no chão -->
+    <filter id="desfoque-sombra" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <!-- brilho leve dos olhos -->
+    <filter id="brilho-olho" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- recortes: formato do tronco e do visor -->
+    <clipPath id="recorte-tronco">
+      <path d="M150 184 C196 184 214 230 212 262 C210 300 184 318 150 318 C116 318 90 300 88 262 C86 230 104 184 150 184 Z"/>
+    </clipPath>
+    <clipPath id="recorte-visor">
+      <rect x="82" y="66" width="136" height="92" rx="44"/>
+    </clipPath>
+  </defs>
+
+  <g id="robo">
+
+    <!-- ================= ANTENA ================= -->
+    <g id="antena" class="antena">
+      <!-- haste -->
+      <line x1="150" y1="42" x2="150" y2="20" stroke="var(--robo-branco-sombra)" stroke-width="5"/>
+      <line x1="148.5" y1="40" x2="148.5" y2="22" stroke="#fff" stroke-width="1.5" opacity=".8"/>
+      <!-- bolinha azul no topo -->
+      <circle cx="150" cy="15" r="9" class="acento"/>
+      <circle cx="147" cy="12" r="2.6" fill="#fff" opacity=".85"/>
+      <!-- base presa na cabeça -->
+      <ellipse cx="150" cy="42" rx="13" ry="5" class="acento"/>
+    </g>
+
+    <!-- ================= CABEÇA ================= -->
+    <g id="cabeca">
+      <!-- crânio grande e arredondado -->
+      <g id="cranio">
+        <rect x="62" y="40" width="176" height="142" rx="66" class="plastico"/>
+        <!-- highlight fino na borda superior esquerda -->
+        <path d="M72 106 Q72 50 130 46" class="realce"/>
+      </g>
+
+      <!-- visor navy com reflexo -->
+      <g id="visor">
+        <rect x="82" y="66" width="136" height="92" rx="44" fill="url(#grad-visor)"/>
+        <!-- reflexo em faixa diagonal, recortado no formato do visor -->
+        <g clip-path="url(#recorte-visor)">
+          <path d="M82 66 L150 66 L110 158 L82 158 Z" fill="url(#grad-reflexo)" opacity=".5"/>
+        </g>
+        <!-- linha de brilho na borda de cima do visor -->
+        <path d="M104 74 Q150 64 196 74" fill="none" stroke="#fff" stroke-width="2" opacity=".3"/>
+      </g>
+
+      <!-- olhos redondos com brilhinho branco -->
+      <g id="olho-esq">
+        <circle cx="118" cy="110" r="17" class="olho"/>
+        <circle cx="112" cy="104" r="5" class="olho-brilho"/>
+        <circle cx="124" cy="117" r="2" class="olho-brilho" opacity=".7"/>
+      </g>
+      <g id="olho-dir">
+        <circle cx="182" cy="110" r="17" class="olho"/>
+        <circle cx="176" cy="104" r="5" class="olho-brilho"/>
+        <circle cx="188" cy="117" r="2" class="olho-brilho" opacity=".7"/>
+      </g>
+
+      <!-- sorriso: traço curvo de ponta redonda -->
+      <g id="boca">
+        <path d="M137 136 Q150 147 163 136" fill="none" stroke="var(--robo-olho)" stroke-width="4.5"/>
+      </g>
+
+      <!-- orelhas laterais azul-claras -->
+      <g id="orelha-esq">
+        <rect x="48" y="86" width="20" height="50" rx="10" class="acento"/>
+        <path d="M54 94 L54 112" class="realce" stroke-width="2.5"/>
+      </g>
+      <g id="orelha-dir">
+        <rect x="232" y="86" width="20" height="50" rx="10" class="acento"/>
+        <path d="M238 94 L238 112" class="realce" stroke-width="2.5"/>
+      </g>
+    </g>
+
+    <!-- ================= TRONCO ================= -->
+    <g id="tronco">
+      <!-- anel do pescoço -->
+      <ellipse cx="150" cy="188" rx="32" ry="9" fill="var(--robo-azul-escuro)"/>
+      <!-- ovo branco -->
+      <path d="M150 184 C196 184 214 230 212 262 C210 300 184 318 150 318 C116 318 90 300 88 262 C86 230 104 184 150 184 Z" class="plastico"/>
+      <!-- base azul arredondada, recortada pelo formato do ovo -->
+      <g clip-path="url(#recorte-tronco)">
+        <ellipse cx="150" cy="318" rx="80" ry="30" fill="url(#grad-base)"/>
+        <path d="M86 296 Q150 280 214 296" fill="none" stroke="#fff" stroke-width="2" opacity=".55"/>
+      </g>
+      <!-- luzinha no peito -->
+      <circle cx="150" cy="222" r="7" class="acento"/>
+      <!-- highlight fino na borda esquerda do tronco -->
+      <path d="M100 236 Q106 198 146 191" class="realce"/>
+    </g>
+
+    <!-- ================= BRAÇOS (à frente do tronco, digitando) ================= -->
+    <!-- cada braço é desenhado "para baixo" e girado no ombro; a mão fica no punho -->
+    <g id="braco-esq">
+      <g transform="rotate(-30 92 206)">
+        <rect x="78" y="198" width="28" height="64" rx="14" class="plastico"/>
+        <path d="M84 210 L84 240" class="realce" stroke-width="2.5"/>
+        <!-- punho azul -->
+        <ellipse cx="92" cy="258" rx="15" ry="7" class="acento"/>
+      </g>
+      <g id="mao-esq">
+        <!-- mão em luva, achatada como se apoiasse no teclado -->
+        <ellipse cx="124" cy="270" rx="21" ry="14" class="mao"/>
+        <path d="M110 265 Q116 259 126 259" class="realce" stroke-width="2.5"/>
+      </g>
+    </g>
+
+    <g id="braco-dir">
+      <g transform="rotate(30 208 206)">
+        <rect x="194" y="198" width="28" height="64" rx="14" class="plastico"/>
+        <path d="M200 210 L200 240" class="realce" stroke-width="2.5"/>
+        <ellipse cx="208" cy="258" rx="15" ry="7" class="acento"/>
+      </g>
+      <g id="mao-dir">
+        <ellipse cx="176" cy="270" rx="21" ry="14" class="mao"/>
+        <path d="M162 265 Q168 259 178 259" class="realce" stroke-width="2.5"/>
+      </g>
+    </g>
+
+    <!-- ================= SOMBRA ================= -->
+    <!-- fica abaixo do tronco (y 318), então não cobre o robô mesmo sendo o último elemento -->
+    <ellipse id="sombra" cx="150" cy="336" rx="72" ry="11" fill="#1B2A4A" opacity=".22" filter="url(#desfoque-sombra)"/>
+  </g>
+</svg>
+
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Escritório isométrico</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+
+<!-- Parte 1: a tela -->
+<header class="topo">
+  <nav class="paginas" aria-label="Cenas">
+    <a href="./index.html" aria-current="page">Escritório</a>
+    <button type="button" id="abrePipeline" aria-haspopup="dialog">Pipeline</button>
+  </nav>
+  <!-- estados do robô ("ocioso" vale só para o agente principal) -->
+  <div class="estados" role="group" aria-label="Estado do robô">
+    <button type="button" data-estado="trabalhando" aria-pressed="true" title="Trabalhando"><i></i>Trabalhando</button>
+    <button type="button" data-estado="pensando" aria-pressed="false" title="Pensando"><i></i>Pensando</button>
+    <button type="button" data-estado="esperando" aria-pressed="false" title="Esperando"><i></i>Esperando</button>
+    <button type="button" data-estado="terminou" aria-pressed="false" title="Terminou"><i></i>Terminou</button>
+    <button type="button" data-estado="finalizou" aria-pressed="false" title="Finalizou"><i></i>Finalizou</button>
+    <button type="button" data-estado="ocioso" aria-pressed="false" title="Ocioso (só o agente principal: pega o celular)"><i></i>Ocioso</button>
+  </div>
+  <div class="modo"><i></i><span>demo</span></div>
+</header>
+
+<!-- Parte 2: a sala isométrica, centralizada (desenhada por js/sala.js) -->
+<main class="palco">
+  <svg id="sala" viewBox="-350 -290 700 700" role="img" aria-label="Escritório isométrico em miniatura"></svg>
+</main>
+
+<form class="barra" id="barra" aria-label="Criar e gerenciar agentes">
+  <div class="entrada">
+    <input id="prompt" type="text" placeholder="Qual é a próxima tarefa?" autocomplete="off" aria-label="Tarefa do novo agente">
+    <button type="submit" class="enviar" aria-label="Enviar tarefa">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg>
+    </button>
+  </div>
+  <div class="controles">
+    <button type="button" id="menos" aria-label="Remover agente">−</button>
+    <output id="conta">0</output>
+    <button type="button" id="mais" aria-label="Adicionar agente">+</button>
+    <button type="button" id="maisSub" class="sub" aria-label="Adicionar subagente" title="Adicionar subagente (tecla s)">+ sub</button>
+    <button type="button" id="menosSub" class="sub" aria-label="Remover subagente" title="Remover subagente">− sub</button>
+    <div class="titulo"><b>Escritório dos agentes</b><small>quarto</small></div>
+  </div>
+</form>
+
+<!-- modal do pipeline: lista de etapas (js/pipeline.js) -->
+<dialog class="vidro" id="pipeline" aria-labelledby="pipelineTitulo">
+  <header>
+    <h2 id="pipelineTitulo">Pipeline</h2>
+    <button type="button" class="fechar" id="fechaPipeline" aria-label="Fechar">×</button>
+  </header>
+  <form id="formEtapa" class="nova-etapa">
+    <input id="novaEtapa" type="text" placeholder="Nova etapa (ex.: planejamento)" autocomplete="off" aria-label="Nova etapa">
+    <button type="submit">Adicionar</button>
+  </form>
+  <ol id="etapas" class="etapas"></ol>
+  <p class="vazio" id="semEtapas">Nenhuma etapa ainda.</p>
+  <p class="vazio" id="limiteEtapas" hidden>Máximo de 6 etapas (um agente por etapa).</p>
+  <footer>
+    <button type="button" class="criar" id="criaPipeline">Criar pipeline</button>
+  </footer>
+</dialog>
+
+<script src="js/iso.js"></script>
+<script src="js/robo.js"></script>
+<script src="js/subagente.js"></script>
+<script src="js/sala.js"></script>
+<script src="js/tela.js"></script>
+<script src="js/pipeline.js"></script>
+</body>
+</html>
